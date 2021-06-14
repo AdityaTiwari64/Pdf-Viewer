@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Custom Book Reader</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" integrity="sha512-iBBXm8fW90+nuLcSKlbmrPcLa0OT92xO1BIsZ+ywDWZCvqsWgccV3gFoRBv0z+8dLJgyAHIhR35VZc2oM/gI1w==" crossorigin="anonymous" referrerpolicy="no-referrer"
+    />
+</head>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.0.943/pdf.min.js" integrity="sha512-0DCQV6q4G4VIvwQQOTUbfuROoPElJcmTWUt3MjMzdyREzcOVREUYr2bFuzYC7tDh+tigVrm+X1wnu8SRTexJuw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/js/all.min.js" integrity="sha512-RXf+QSDCUQs5uwRKaDoXt55jygZZm2V++WUZduaU/Ui/9EGp3f/2KZVahFZBKGH0s774sd3HmrhUy+SgOFQLVQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+<body>
+    <div id="my_pdf_viewer">
+        <div class="main-nav">
+            <div id="navigation-control">
+                <button id="go-previous"><i class="fas fa-arrow-circle-left"></i></button>
+                <button id="go_next"><i class="fas fa-arrow-circle-right"></i></button>
+                <input type="number" value="1" id="current_page">
+            </div>
+            <div id="zoom-control">
+                <button id="zoom_in">+</button>
+                <button id="zoom_out">-</button>
+            </div>
+        </div>
+        <div id="canvas_container">
+            <canvas id="pdf_renderer"></canvas>
+        </div>
+
+    </div>
+
+    <script>
+        var myState = {
+            pdf: null,
+            currentPage: 1,
+            zoom: 1
+        }
+        pdfjsLib.getDocument("sample.pdf").then(pdf => {
+            myState.pdf = pdf
+            render()
+        })
+
+        function render() {
+            myState.pdf.getPage(myState.currentPage).then(page => {
+                var canvas = document.getElementById("pdf_renderer")
+                var ctx = canvas.getContext("2d")
+                var viewport = page.getViewport(myState.zoom)
+
+                canvas.width = viewport.width;
+                canvas.height = viewport.height
+
+                // redering the page
+
+                page.render({
+                    canvasContext: ctx,
+                    viewport: viewport
+                })
+            })
+        }
+        document.getElementById("go-previous").addEventListener('click', (e) => {
+            if (myState.pdf == null || myState.currentPage == 1) return;
+
+            myState.currentPage = myState.currentPage - 1;
+
+            document.getElementById("current_page").value = myState.currentPage
+
+            render()
+        })
+        document.getElementById("go_next").addEventListener('click', (e) => {
+            if (myState.pdf == null || myState.currentPage > myState.pdf._pdfInfo.numPages) return;
+
+            myState.currentPage = myState.currentPage + 1;
+
+            document.getElementById("current_page").value = myState.currentPage
+
+            render()
+        })
+
+        document.getElementById("current_page").addEventListener('keypress', (e) => {
+            if (myState.pdf == null) return;
+
+            var code = (e.keyCode ? e.keyCode : e.which)
+
+            if (code == 13) {
+                var desiredPage = document.getElementById("current_page").valueAsNumber
+
+                if (desiredPage >= 1 && desiredPage <= myState.pdf._pdfInfo.numPages) {
+                    myState.currentPage = desiredPage
+                    document.getElementById("current_page").value = desiredPage
+
+                    render()
+                }
+            }
+        })
+
+        document.getElementById("zoom_in").addEventListener('click', (e) => {
+            if (myState.pdf == null) return;
+            myState.zoom = myState.zoom + 0.3
+            render()
+        })
+        document.getElementById("zoom_out").addEventListener('click', (e) => {
+            if (myState.pdf == null) return;
+            myState.zoom = myState.zoom - 0.3
+            render()
+        })
+    </script>
+</body>
+
+</html>
